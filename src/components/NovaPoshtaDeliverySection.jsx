@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
-import { fetchWarehousesForPick, searchCities } from '../lib/novaPoshta'
+import { fetchWarehousesForPick, peekWarehousesForPick, searchCities } from '../lib/novaPoshta'
 
 const DEBOUNCE_MS = 350
 
@@ -86,12 +86,23 @@ export function NovaPoshtaDeliverySection({ apiKey: apiKeyProp, deliveryMethod }
         return
       }
 
+      const loadForRef = selectedCity.Ref
+
+      const fromCache = peekWarehousesForPick(selectedCity)
+      if (fromCache !== null) {
+        if (!cancelled) {
+          setWarehouses(fromCache)
+          setWarehouseRef('')
+          setWarehouseError('')
+          setWarehouseLoading(false)
+        }
+        return
+      }
+
       setWarehouseLoading(true)
       setWarehouseError('')
       setWarehouseRef('')
       setWarehouses([])
-
-      const loadForRef = selectedCity.Ref
 
       try {
         const list = await fetchWarehousesForPick(apiKey, selectedCity)
@@ -261,7 +272,14 @@ export function NovaPoshtaDeliverySection({ apiKey: apiKeyProp, deliveryMethod }
           {!selectedCity ? (
             <p className="checkout-npHint">Спочатку оберіть місто зі списку — тоді тут з’являться відділення саме для нього.</p>
           ) : warehouseLoading ? (
-            <p className="checkout-npHint">Завантаження відділень для «{selectedCity.Description}»…</p>
+            <div className="checkout-npLoading" role="status" aria-live="polite" aria-busy="true">
+              <span className="checkout-npSpinnerWave" aria-hidden>
+                <span />
+                <span />
+                <span />
+              </span>
+              <span>Завантаження відділень для «{selectedCity.Description}»…</span>
+            </div>
           ) : warehouseError ? (
             <p className="checkout-npError">{warehouseError}</p>
           ) : warehouses.length === 0 ? (

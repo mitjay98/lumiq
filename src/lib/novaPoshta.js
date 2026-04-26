@@ -42,10 +42,109 @@ export async function npRequest(apiKey, modelName, calledMethod, methodPropertie
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
-/** Кеш відділень по CityRef — менше запитів при повторному виборі / React Strict Mode. */
-const WH_CACHE_TTL_MS = 12 * 60 * 1000
-/** Префікс версії кешу (після зміни формату списку — нове завантаження). */
-const WH_CACHE_VER = 'v3:'
+function getLs() {
+  if (typeof window === 'undefined' || !window.localStorage) return null
+  return window.localStorage
+}
+
+/** Ключі localStorage (переживають F5); значення — JSON { t, list|data }. */
+const LS_WH_PREFIX = 'lumiq_np_wh:'
+/** Готовий список відділень для конкретного обраного пункту (pick.Ref) — швидко після F5. */
+const LS_WH_PICK_PREFIX = 'lumiq_np_wh_pick:'
+const LS_CITY_PREFIX = 'lumiq_np_city:'
+
+/** @type {Map<string, { t: number, list: { Ref: string, Description: string }[] }>} */
+const whPickCache = new Map()
+
+/**
+ * @param {string} prefix
+ * @param {string} ck
+ */
+function lsReadEntry(prefix, ck, ttlMs) {
+  const ls = getLs()
+  if (!ls) return null
+  try {
+    const raw = ls.getItem(prefix + ck)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (!parsed || typeof parsed.t !== 'number') return null
+    if (Date.now() - parsed.t >= ttlMs) {
+      ls.removeItem(prefix + ck)
+      return null
+    }
+    return parsed
+  } catch {
+    try {
+      ls.removeItem(prefix + ck)
+    } catch {
+      /* ignore */
+    }
+    return null
+  }
+}
+
+/**
+ * @param {string} prefix
+ * @param {string} ck
+ * @param {{ t: number, list?: unknown[], data?: unknown[] }} payload
+ */
+function lsWriteEntry(prefix, ck, payload) {
+  const ls = getLs()
+  if (!ls) return
+  try {
+    ls.setItem(prefix + ck, JSON.stringify(payload))
+  } catch (e) {
+    const name = /** @type {{ name?: string, code?: number }} */ (e).name
+    const code = /** @type {{ name?: string, code?: number }} */ (e).code
+    if (name === 'QuotaExceededError' || code === 22) {
+      lsPruneNpKeys(LS_WH_PREFIX)
+      lsPruneNpKeys(LS_WH_PICK_PREFIX)
+      lsPruneNpKeys(LS_CITY_PREFIX)
+      try {
+        ls.setItem(prefix + ck, JSON.stringify(payload))
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+}
+
+/** Видаляє половину найстаріших записів з префіксом (звільнення квоти). */
+function lsPruneNpKeys(prefix) {
+  const ls = getLs()
+  if (!ls) return
+  const keys = []
+  for (let i = 0; i < ls.length; i++) {
+    const k = ls.key(i)
+    if (k && k.startsWith(prefix)) keys.push(k)
+  }
+  const meta = keys
+    .map((k) => {
+      try {
+        const v = JSON.parse(ls.getItem(k) || '{}')
+        return { k, t: typeof v.t === 'number' ? v.t : 0 }
+      } catch {
+        return { k, t: 0 }
+      }
+    })
+    .sort((a, b) => a.t - b.t)
+  const drop = Math.max(1, Math.ceil(meta.length / 2))
+  for (let i = 0; i < drop; i++) {
+    try {
+      ls.removeItem(meta[i].k)
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+/**
+ * Кеш відділень по CityRef (наприклад Київ — один раз завантажили, далі з пам’яті).
+ * TTL 12 год — потім знову запит до НП.
+ */
+const WH_CACHE_TTL_MS = 12 * 60 * 60 * 1000
+/** Префікс версії кешу (зміна формату / TTL — нове завантаження). */
+const WH_CACHE_VER = 'v5:'
 /** @type {Map<string, { t: number, list: { Ref: string, Description: string, npCityRef?: string }[] }>} */
 const whCache = new Map()
 /** @type {Map<string, Promise<{ Ref: string, Description: string, npCityRef?: string }[]>>} */
@@ -65,6 +164,19 @@ function isRateLimitedNpResponse(json) {
   return /too\s+many|many\s+requests|забагато|часті\s+запити|rate|429/i.test(parts)
 }
 
+/** Кеш результатів пошуку міст (той самий рядок у полі — без повторного запиту до НП). TTL 1 год. */
+const CITY_SEARCH_CACHE_TTL_MS = 60 * 60 * 1000
+const CITY_SEARCH_CACHE_MAX = 120
+const CITY_SEARCH_CACHE_VER = 'c1:'
+/** @type {Map<string, { t: number, data: CityPick[] }>} */
+const citySearchCache = new Map()
+/** @type {Map<string, Promise<CityPick[]>>} */
+const citySearchInflight = new Map()
+
+function citySearchCacheKey(qTrimmed) {
+  return `${CITY_SEARCH_CACHE_VER}${qTrimmed.toLowerCase()}`
+}
+
 /**
  * Ref населеного пункту (для форми); warehouseCityRef — CityRef для getWarehouses (у searchSettlements це зазвичай DeliveryCity).
  * @typedef {{
@@ -77,15 +189,12 @@ function isRateLimitedNpResponse(json) {
  */
 
 /**
- * Онлайн-пошук населених пунктів + довідник міст (getCities), об’єднано без дублікатів Ref.
+ * Прямий запит до НП (без кешу). `q` — уже trim і довжина ≥ 2.
  * @param {string} apiKey
- * @param {string} findByString
+ * @param {string} q
  * @returns {Promise<CityPick[]>}
  */
-export async function searchCities(apiKey, findByString) {
-  const q = findByString.trim()
-  if (q.length < 2) return []
-
+async function fetchSearchCitiesFromApi(apiKey, q) {
   /** @type {Map<string, CityPick>} */
   const merged = new Map()
 
@@ -147,20 +256,73 @@ export async function searchCities(apiKey, findByString) {
   return Array.from(merged.values()).slice(0, 40)
 }
 
+/**
+ * Онлайн-пошук населених пунктів + getCities; результати кешуються в пам’яті браузера (TTL + ліміт записів).
+ * @param {string} apiKey
+ * @param {string} findByString
+ * @returns {Promise<CityPick[]>}
+ */
+export async function searchCities(apiKey, findByString) {
+  const q = findByString.trim()
+  if (q.length < 2) return []
+
+  const ck = citySearchCacheKey(q)
+  const hit = citySearchCache.get(ck)
+  if (hit && Date.now() - hit.t < CITY_SEARCH_CACHE_TTL_MS) {
+    return hit.data.map((c) => ({ ...c }))
+  }
+
+  const lsCity = lsReadEntry(LS_CITY_PREFIX, ck, CITY_SEARCH_CACHE_TTL_MS)
+  if (lsCity && Array.isArray(lsCity.data)) {
+    const entry = { t: lsCity.t, data: /** @type {CityPick[]} */ (lsCity.data) }
+    citySearchCache.set(ck, entry)
+    return entry.data.map((c) => ({ ...c }))
+  }
+
+  const inflight = citySearchInflight.get(ck)
+  if (inflight) {
+    const data = await inflight
+    return data.map((c) => ({ ...c }))
+  }
+
+  const p = (async () => {
+    const data = await fetchSearchCitiesFromApi(apiKey, q)
+    const now = Date.now()
+    citySearchCache.set(ck, { t: now, data })
+    lsWriteEntry(LS_CITY_PREFIX, ck, { t: now, data })
+    while (citySearchCache.size > CITY_SEARCH_CACHE_MAX) {
+      const oldest = citySearchCache.keys().next().value
+      if (oldest === undefined) break
+      citySearchCache.delete(oldest)
+    }
+    return data
+  })().finally(() => {
+    citySearchInflight.delete(ck)
+  })
+
+  citySearchInflight.set(ck, p)
+  const data = await p
+  return data.map((c) => ({ ...c }))
+}
+
+const WH_PAGE_LIMIT = '500'
+
 async function fetchWarehousesPaged(apiKey, methodProperties) {
   const out = []
-  const maxPages = 22
+  /** З Limit=500 зазвичало 1–3 сторінки; якщо НП ігнорує Limit — більше сторінок по 50+ записів */
+  const maxPages = 15
 
   for (let page = 0; page < maxPages; page++) {
-    if (page > 0) await sleep(140)
+    if (page > 0) await sleep(45)
 
     let json
     for (let attempt = 0; attempt < 6; attempt++) {
-      if (attempt > 0) await sleep(500 + attempt * 450)
+      if (attempt > 0) await sleep(400 + attempt * 400)
 
       json = await npRequest(apiKey, 'Address', 'getWarehouses', {
         ...methodProperties,
         Page: String(page),
+        Limit: WH_PAGE_LIMIT,
       })
 
       if (json.success) break
@@ -209,6 +371,16 @@ export async function fetchWarehousesForCity(apiKey, cityRef) {
     return hit.list.map((w) => ({ ...w }))
   }
 
+  const lsWh = lsReadEntry(LS_WH_PREFIX, ck, WH_CACHE_TTL_MS)
+  if (lsWh && Array.isArray(lsWh.list)) {
+    const entry = {
+      t: lsWh.t,
+      list: /** @type {{ Ref: string, Description: string, npCityRef?: string }[]} */ (lsWh.list),
+    }
+    whCache.set(ck, entry)
+    return entry.list.map((w) => ({ ...w }))
+  }
+
   const existing = whInflight.get(ck)
   if (existing) {
     const list = await existing
@@ -217,7 +389,10 @@ export async function fetchWarehousesForCity(apiKey, cityRef) {
 
   const p = (async () => {
     const list = await fetchWarehousesPaged(apiKey, { CityRef: cityRef })
-    whCache.set(ck, { t: Date.now(), list })
+    const now = Date.now()
+    const payload = { t: now, list }
+    whCache.set(ck, payload)
+    lsWriteEntry(LS_WH_PREFIX, ck, payload)
     return list
   })().finally(() => {
     whInflight.delete(ck)
@@ -229,6 +404,59 @@ export async function fetchWarehousesForCity(apiKey, cityRef) {
 }
 
 /**
+ * @param {{ npCityRef?: string, Ref: string, Description: string }[]} raw
+ * @param {CityPick} pick
+ */
+function applyWarehousesPickFilter(raw, pick) {
+  const cityRef = pick.warehouseCityRef || pick.Ref
+  const settlementRef = pick.Ref
+  const filtered = raw.filter((w) => {
+    const cr = w.npCityRef
+    if (!cr) return true
+    if (cr === cityRef) return true
+    if (settlementRef && cr === settlementRef) return true
+    return false
+  })
+  return filtered.map(({ Ref, Description }) => ({ Ref, Description }))
+}
+
+/**
+ * Синхронно: чи є вже готовий список відділень (RAM / localStorage по pick.Ref / сирий кеш по місту).
+ * @param {CityPick} pick
+ * @returns {{ Ref: string, Description: string }[] | null} null — треба мережа
+ */
+export function peekWarehousesForPick(pick) {
+  const pickKey = pick.Ref
+  const memPick = whPickCache.get(pickKey)
+  if (memPick && Date.now() - memPick.t < WH_CACHE_TTL_MS) {
+    return memPick.list.map((w) => ({ ...w }))
+  }
+
+  const lsPick = lsReadEntry(LS_WH_PICK_PREFIX, pickKey, WH_CACHE_TTL_MS)
+  if (lsPick && Array.isArray(lsPick.list)) {
+    const list = /** @type {{ Ref: string, Description: string }[]} */ (lsPick.list)
+    whPickCache.set(pickKey, { t: lsPick.t, list })
+    return list.map((w) => ({ ...w }))
+  }
+
+  const cityRef = pick.warehouseCityRef || pick.Ref
+  const ck = whCacheKey(cityRef)
+  const mem = whCache.get(ck)
+  if (mem && Date.now() - mem.t < WH_CACHE_TTL_MS) {
+    return applyWarehousesPickFilter(mem.list, pick)
+  }
+
+  const lsWh = lsReadEntry(LS_WH_PREFIX, ck, WH_CACHE_TTL_MS)
+  if (lsWh && Array.isArray(lsWh.list)) {
+    const list = /** @type {{ Ref: string, Description: string, npCityRef?: string }[]} */ (lsWh.list)
+    whCache.set(ck, { t: lsWh.t, list })
+    return applyWarehousesPickFilter(list, pick)
+  }
+
+  return null
+}
+
+/**
  * Відділення для обраного пункту (завжди через Address/getWarehouses + CityRef).
  * Для рядків із searchSettlements у CityRef підставляється DeliveryCity (або запасні поля з відповіді НП).
  * Після завантаження лишаються лише рядки, де CityRef збігається з обраним містом (якщо НП повернув поле).
@@ -237,16 +465,10 @@ export async function fetchWarehousesForCity(apiKey, cityRef) {
  */
 export async function fetchWarehousesForPick(apiKey, pick) {
   const cityRef = pick.warehouseCityRef || pick.Ref
-  const settlementRef = pick.Ref
   const raw = await fetchWarehousesForCity(apiKey, cityRef)
-
-  const filtered = raw.filter((w) => {
-    const cr = w.npCityRef
-    if (!cr) return true
-    if (cr === cityRef) return true
-    if (settlementRef && cr === settlementRef) return true
-    return false
-  })
-
-  return filtered.map(({ Ref, Description }) => ({ Ref, Description }))
+  const out = applyWarehousesPickFilter(raw, pick)
+  const now = Date.now()
+  whPickCache.set(pick.Ref, { t: now, list: out })
+  lsWriteEntry(LS_WH_PICK_PREFIX, pick.Ref, { t: now, list: out })
+  return out
 }
