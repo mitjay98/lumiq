@@ -1,0 +1,143 @@
+@font-face {
+  font-family: 'Michroma';
+  src: url('/fonts/Michroma-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-family: var(--sans);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+:root {
+  --text: #3d3d3d;
+  --text-h: #0a0a0a;
+  --bg: #ffffff;
+  --border: #c8c8c8;
+  --code-bg: #f0f0f0;
+  --accent: #0a0a0a;
+  --accent-bg: rgb(0 0 0 / 0.08);
+  --accent-border: rgb(0 0 0 / 0.35);
+  --social-bg: #ebebeb;
+  --shadow:
+    rgb(0 0 0 / 0.08) 0 10px 15px -3px, rgb(0 0 0 / 0.04) 0 4px 6px -2px;
+
+  --header-bg: #0a0a0a;
+  --header-text: #ffffff;
+  --header-muted: rgb(255 255 255 / 0.72);
+
+  /* Michroma — лише латиниця; український текст через Jura (кирилиця + схожий «техно» настрій) */
+  --sans: 'Michroma', 'Jura', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --heading: 'Michroma', 'Jura', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, Consolas, monospace;
+
+  font: 18px/145% var(--sans);
+  letter-spacing: 0.18px;
+  color-scheme: light;
+  color: var(--text);
+  background: var(--bg);
+  /* Michroma — один накреслення; дозволяємо синтетичний жир для font-weight > 400 */
+  font-synthesis: weight;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  @media (max-width: 1024px) {
+    font-size: 16px;
+  }
+}
+
+body {
+  margin: 0;
+  font-family: var(--sans);
+}
+
+/* Щоб Michroma був у полях і кнопках, а не системний шрифт */
+button,
+input,
+select,
+textarea {
+  font-family: var(--sans);
+}
+
+code,
+kbd,
+samp,
+pre {
+  font-family: var(--mono);
+}
+
+#root {
+  width: 100%;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  background: var(--bg);
+  font-family: var(--sans);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--heading);
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+h1 {
+  font-size: 56px;
+  letter-spacing: -1.68px;
+  margin: 32px 0;
+  @media (max-width: 1024px) {
+    font-size: 36px;
+    margin: 20px 0;
+  }
+}
+h2 {
+  font-size: 24px;
+  line-height: 118%;
+  letter-spacing: -0.24px;
+  margin: 0 0 8px;
+  @media (max-width: 1024px) {
+    font-size: 20px;
+  }
+}
+p {
+  margin: 0;
+}
+
+code,
+.counter {
+  font-family: var(--mono);
+  display: inline-flex;
+  border-radius: 4px;
+  color: var(--text-h);
+}
+
+code {
+  font-size: 15px;
+  line-height: 135%;
+  padding: 4px 8px;
+  background: var(--code-bg);
+}
+
+/* Усі елементи успадковують Michroma від body (перебиває дефолти браузера для форм тощо) */
+body *:not(code):not(kbd):not(samp):not(pre):not(.counter) {
+  font-family: inherit;
+}
+
+svg {
+  font-family: var(--sans);
+}

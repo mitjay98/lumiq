@@ -1,0 +1,849 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+  background: var(--bg);
+  overflow-x: hidden;
+}
+
+.app__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1126px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  width: 100%;
+  background: var(--header-bg);
+  border-bottom: 1px solid rgb(255 255 255 / 0.12);
+}
+
+.header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  max-width: 1126px;
+  margin: 0 auto;
+  padding: 0.85rem 1.25rem;
+  box-sizing: border-box;
+}
+
+.header__brand {
+  font-family: 'Michroma', 'Jura', var(--heading);
+  font-weight: 600;
+  font-size: 1.28rem;
+  color: var(--header-text);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  position: relative;
+  display: inline-block;
+  isolation: isolate;
+  line-height: 1.1;
+  text-shadow:
+    0 0 1px rgb(255 255 255 / 0.82),
+    0 0 5px rgb(255 255 255 / 0.6),
+    0 0 12px rgb(255 255 255 / 0.36);
+  animation: lumiqGlow 3.2s ease-in-out infinite alternate;
+}
+
+/* Як на маркуванні: «Lum» + виразні «IQ» */
+.header__brand-iq {
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  margin-left: 0.06em;
+}
+
+.header__brand::before,
+.header__brand::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  color: #fff;
+  pointer-events: none;
+}
+
+.header__brand::before {
+  z-index: -2;
+  filter: blur(7px);
+  opacity: 0.58;
+}
+
+.header__brand::after {
+  z-index: -1;
+  filter: blur(2px);
+  opacity: 0.74;
+}
+
+.header__brand-accent {
+  font-weight: 300;
+  letter-spacing: 0.22em;
+  opacity: 0.92;
+}
+
+.header__nav {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.header__link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.15rem;
+  font-size: 0.95rem;
+  color: var(--header-muted);
+  text-decoration: none;
+  transition: color 0.2s ease, text-shadow 0.28s ease;
+  border: none;
+  background: transparent;
+}
+
+.header__link:hover {
+  color: var(--header-text);
+  text-shadow:
+    0 0 1px rgb(255 255 255 / 0.85),
+    0 0 8px rgb(255 255 255 / 0.5),
+    0 0 18px rgb(255 255 255 / 0.28);
+}
+
+.header__link--active {
+  color: var(--header-text);
+  font-weight: 600;
+}
+
+.header__link:focus-visible {
+  outline: none;
+  color: var(--header-text);
+  text-shadow:
+    0 0 1px rgb(255 255 255 / 0.85),
+    0 0 8px rgb(255 255 255 / 0.5),
+    0 0 18px rgb(255 255 255 / 0.28);
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 1.5rem 1.25rem 2.5rem;
+  text-align: center;
+}
+
+.hero {
+  max-width: 40rem;
+  margin: 0 auto;
+}
+
+.hero__eyebrow {
+  margin: 0 0 0.35rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+.hero__title {
+  margin: 0 0 0.75rem;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+.hero__lead {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.carousel {
+  --carousel-preview-divisor: 1.5;
+  max-width: 100%;
+  margin: 0 auto;
+  width: 100%;
+  outline: none;
+}
+
+.carousel:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 6px;
+  border-radius: 2px;
+  box-shadow: none;
+}
+
+.carousel__viewport {
+  position: relative;
+  border-radius: 0;
+  overflow: visible;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.carousel__img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  vertical-align: middle;
+  object-fit: contain;
+}
+
+/* Прев’ю ≈ у 1,5 раза менше за шириною колонки */
+.carousel__open {
+  display: block;
+  width: 100%;
+  max-width: calc(100% / var(--carousel-preview-divisor));
+  margin: 0 auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: zoom-in;
+  line-height: 0;
+  border-radius: 0;
+}
+
+.carousel__open:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.carousel__caption {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  z-index: 2;
+  width: calc(100% / var(--carousel-preview-divisor));
+  max-width: calc(100% / var(--carousel-preview-divisor));
+  transform: translateX(-50%);
+  box-sizing: border-box;
+  padding: 0.85rem 1rem;
+  background: linear-gradient(to top, rgb(0 0 0 / 0.75), transparent);
+}
+
+.carousel__title {
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.5);
+}
+
+.carousel__controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.carousel__arrow {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-h);
+  line-height: 0;
+  cursor: pointer;
+  isolation: isolate;
+  transition: color 0.28s ease, transform 0.1s ease;
+}
+
+.carousel__arrow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: 50%;
+  background: #0a0a0a;
+  opacity: 0;
+  transform: scale(0.88);
+  transition:
+    opacity 0.28s ease,
+    transform 0.28s ease,
+    box-shadow 0.28s ease;
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.35),
+    0 0 14px 5px rgb(0 0 0 / 0.28),
+    0 0 28px 12px rgb(0 0 0 / 0.18);
+  pointer-events: none;
+}
+
+.carousel__arrow:hover::before,
+.carousel__arrow:focus-visible::before {
+  opacity: 1;
+  transform: scale(1);
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.5),
+    0 0 18px 8px rgb(0 0 0 / 0.38),
+    0 0 36px 14px rgb(0 0 0 / 0.22);
+}
+
+/* Натискання: кружок і стрілка «вдавлюються» */
+.carousel__arrow:active {
+  transform: scale(0.94);
+  color: #ffffff;
+}
+
+.carousel__arrow:active::before {
+  opacity: 1;
+  transform: scale(0.88);
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.65),
+    0 0 8px 3px rgb(0 0 0 / 0.5),
+    0 0 16px 6px rgb(0 0 0 / 0.35);
+}
+
+.carousel__arrow-icon {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+  transition: filter 0.28s ease, transform 0.1s ease;
+}
+
+.carousel__arrow:hover {
+  color: #ffffff;
+}
+
+.carousel__arrow:hover .carousel__arrow-icon,
+.carousel__arrow:focus-visible .carousel__arrow-icon {
+  filter:
+    drop-shadow(0 0 1px rgb(255 255 255 / 0.95))
+    drop-shadow(0 0 6px rgb(255 255 255 / 0.65))
+    drop-shadow(0 0 14px rgb(255 255 255 / 0.4));
+}
+
+.carousel__arrow:active .carousel__arrow-icon {
+  transform: scale(0.9);
+  filter:
+    drop-shadow(0 0 1px rgb(255 255 255 / 0.9))
+    drop-shadow(0 0 4px rgb(255 255 255 / 0.55))
+    drop-shadow(0 0 10px rgb(255 255 255 / 0.35));
+}
+
+.carousel__arrow:focus-visible {
+  outline: none;
+  color: #ffffff;
+}
+
+.carousel__dots {
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.carousel__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: var(--border);
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.carousel__dot:hover {
+  background: var(--text);
+}
+
+.carousel__dot--active {
+  background: var(--text-h);
+  transform: scale(1.25);
+}
+
+.buy {
+  max-width: 32rem;
+  margin: 1rem auto 0;
+  padding: 1.75rem 1.25rem;
+  border-radius: 14px;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.buy__heading {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+}
+
+.buy__text {
+  margin: 0 0 1.25rem;
+  line-height: 1.5;
+}
+
+.buy__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 12rem;
+  padding: 0.85rem 1.75rem;
+  border-radius: 999px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: #ffffff;
+  background: var(--text-h);
+  border: 2px solid var(--text-h);
+  box-shadow: var(--shadow);
+  transition: transform 0.15s, background 0.15s, color 0.15s;
+}
+
+.buy__btn:hover {
+  background: #ffffff;
+  color: var(--text-h);
+  transform: translateY(-1px);
+}
+
+.buy__btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.footer {
+  padding: 1rem 1.25rem 1.5rem;
+  text-align: center;
+  color: var(--text);
+  font-size: 0.85rem;
+  background: var(--bg);
+}
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: grid;
+  place-items: center;
+  padding: min(1.5rem, 4vw);
+  box-sizing: border-box;
+}
+
+.lightbox__backdrop {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: rgb(0 0 0 / 0.88);
+  cursor: pointer;
+}
+
+.lightbox__panel {
+  position: relative;
+  z-index: 1;
+  max-width: min(98vw, 1920px);
+  max-height: 92vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lightbox__img {
+  display: block;
+  max-width: 100%;
+  max-height: 90vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 4px;
+  box-shadow:
+    0 8px 40px rgb(0 0 0 / 0.45),
+    0 0 1px rgb(255 255 255 / 0.12);
+}
+
+.lightbox__close {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.55);
+  color: #fff;
+  font-size: 1.65rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.lightbox__close:hover {
+  background: rgb(0 0 0 / 0.75);
+}
+
+.lightbox__close:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+@keyframes lumiqGlow {
+  from {
+    text-shadow:
+      0 0 1px rgb(255 255 255 / 0.78),
+      0 0 4px rgb(255 255 255 / 0.52),
+      0 0 10px rgb(255 255 255 / 0.3);
+  }
+  to {
+    text-shadow:
+      0 0 2px rgb(255 255 255 / 0.88),
+      0 0 6px rgb(255 255 255 / 0.66),
+      0 0 14px rgb(255 255 255 / 0.42);
+  }
+}
+
+/* Сторінка «До / після» */
+.beforeAfter {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  max-width: 1126px;
+  margin: 0 auto;
+  padding: 1.25rem 1.25rem 2rem;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+/* Альбомний формат: великі кадри на всю ширину вікна (як editorial-галереї) */
+.beforeAfter--album {
+  max-width: none;
+  width: 100%;
+  padding-left: 0;
+  padding-right: 0;
+  padding-bottom: clamp(2rem, 6vw, 4rem);
+}
+
+.beforeAfter--album .beforeAfter__intro {
+  max-width: 1126px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+/* Вихід на повну ширину viewport із колонки max-width */
+.beforeAfter__bleed {
+  position: relative;
+  width: 100vw;
+  left: 50%;
+  transform: translateX(-50%);
+  box-sizing: border-box;
+}
+
+.beforeAfter__flash {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  background: #fff;
+  pointer-events: none;
+  animation: beforeAfterFlashFade 0.45s ease-out forwards;
+}
+
+@keyframes beforeAfterFlashFade {
+  0% {
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.beforeAfter__top {
+  max-width: 38rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.beforeAfter__title {
+  margin: 0 auto 0.5rem;
+  font-size: clamp(1.35rem, 3vw, 1.85rem);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--text-h);
+  text-align: center;
+}
+
+.beforeAfter__lead {
+  margin: 0 auto 1.25rem;
+  max-width: 34rem;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--text);
+  text-align: center;
+  text-wrap: balance;
+}
+
+/* Порівняння: велике вікно на всю ширину, «contain» — увесь кадр без обрізання */
+.beforeAfter--album .beforeAfter__track {
+  position: relative;
+  width: 100%;
+  margin: 0;
+  height: min(82vh, 960px);
+  min-height: min(72vh, 720px);
+  border-radius: 0;
+  overflow: hidden;
+  border: none;
+  border-top: 1px solid rgb(0 0 0 / 0.06);
+  border-bottom: 1px solid rgb(0 0 0 / 0.06);
+  background: #050505;
+  touch-action: none;
+  user-select: none;
+  isolation: isolate;
+}
+
+.beforeAfter__track {
+  position: relative;
+  width: min(100%, 1200px);
+  margin: 0 auto;
+  height: min(56vw, min(68vh, 640px));
+  min-height: 280px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: #0a0a0a;
+  touch-action: none;
+  user-select: none;
+  isolation: isolate;
+}
+
+.beforeAfter__stage {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+.beforeAfter--album .beforeAfter__stage {
+  border-radius: 0;
+}
+
+.beforeAfter__imgWrap--before {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.beforeAfter__img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  image-rendering: auto;
+}
+
+.beforeAfter--album .beforeAfter__img {
+  object-fit: contain;
+}
+
+.beforeAfter__img--after {
+  z-index: 0;
+}
+
+.beforeAfter__img--before {
+  z-index: 0;
+}
+
+/* Лише ледь помітна напівпрозора межа (без круглої ручки) */
+.beforeAfter__handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 3;
+  width: 0;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.beforeAfter__handleLine {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  margin-left: -0.5px;
+  border-radius: 1px;
+  /* ледь видно на світлих і темних ділянках фото */
+  background: rgb(255 255 255 / 0.22);
+  box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.06);
+}
+
+.beforeAfter__range {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: ew-resize;
+  opacity: 0;
+  /* горизонтальний повзунок: вісь X */
+  direction: ltr;
+}
+
+/* Альбом під порівнянням — великі фото на всю ширину, стовпчиком */
+.baAlbum {
+  margin-top: clamp(2.5rem, 6vw, 4.5rem);
+  text-align: center;
+}
+
+.baAlbum__intro {
+  max-width: 1126px;
+  margin: 0 auto;
+  padding: 0 1.25rem clamp(1.75rem, 4vw, 3rem);
+}
+
+.baAlbum__kicker {
+  margin: 0 0 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgb(0 0 0 / 0.42);
+}
+
+.baAlbum__title {
+  margin: 0 0 0.5rem;
+  font-size: clamp(1.15rem, 2.4vw, 1.45rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-h);
+}
+
+.baAlbum__lead {
+  margin: 0 auto;
+  max-width: 34rem;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--text);
+}
+
+.baAlbum__bleed {
+  position: relative;
+  max-width: min(1125px, calc(88vw * 1.25), calc(100vw - 2rem));
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 1rem;
+  box-sizing: border-box;
+}
+
+.baAlbum__frame {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.baAlbum__frame + .baAlbum__frame {
+  margin-top: clamp(1.75rem, 4.5vw, 3.5rem);
+}
+
+.baAlbum__open {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  cursor: zoom-in;
+  background: #050505;
+  line-height: 0;
+}
+
+.baAlbum__open:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.baAlbum__open img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: none;
+  vertical-align: middle;
+  image-rendering: auto;
+}
+
+.baMosaic-zoom {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+  display: grid;
+  place-items: center;
+  padding: min(1rem, 3vw);
+  box-sizing: border-box;
+  background: rgb(0 0 0 / 0.92);
+}
+
+.baMosaic-zoom__img {
+  display: block;
+  max-width: min(100vw, 2560px);
+  max-height: 96vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 2px;
+  box-shadow: 0 16px 64px rgb(0 0 0 / 0.55);
+}
+
+.baMosaic-zoom__close {
+  position: absolute;
+  top: min(1rem, 3vh);
+  right: min(1rem, 3vw);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.55);
+  color: #fff;
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.baMosaic-zoom__close:hover {
+  background: rgb(0 0 0 / 0.75);
+}
+
+@media (max-width: 640px) {
+  .beforeAfter--album .beforeAfter__track {
+    height: min(58vh, 520px);
+    min-height: min(52vh, 420px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .beforeAfter__flash {
+    animation: none;
+    opacity: 0;
+  }
+}

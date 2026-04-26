@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <title>Lumiq — IQ</title>
+  <defs>
+    <linearGradient id="iqFace" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="35%" stop-color="#f2f6ff"/>
+      <stop offset="100%" stop-color="#a8bfff"/>
+    </linearGradient>
+    <filter id="iqShine" x="-60%" y="-60%" width="220%" height="220%" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2.5" result="blur"/>
+      <feFlood flood-color="#f0f6ff" flood-opacity="1" result="flood"/>
+      <feComposite in="flood" in2="blur" operator="in" result="rim"/>
+      <feGaussianBlur in="rim" stdDeviation="1.5" result="rimSoft"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.4" result="bloom"/>
+      <feColorMatrix
+        in="bloom"
+        type="matrix"
+        values="1 0 0 0 0  1 0 0 0 0  1 0 0 0 0  0 0 0 0.5 0"
+        result="bloomF"/>
+      <feMerge>
+        <feMergeNode in="rimSoft"/>
+        <feMergeNode in="rim"/>
+        <feMergeNode in="bloomF"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="64" height="64" rx="12" ry="12" fill="#020205"/>
+
+  <text
+    x="32"
+    y="34"
+    text-anchor="middle"
+    dominant-baseline="middle"
+    font-family="'Michroma', 'Jura', ui-sans-serif, system-ui, sans-serif"
+    font-size="30"
+    font-weight="800"
+    letter-spacing="-1.5"
+    fill="url(#iqFace)"
+    filter="url(#iqShine)"
+  >IQ</text>
+</svg>
