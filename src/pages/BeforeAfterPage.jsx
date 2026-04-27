@@ -1,13 +1,49 @@
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { BEFORE_AFTER } from '../config/beforeAfterAssets'
 import { BeforeAfterMosaic } from '../components/BeforeAfterMosaic'
 
 export function BeforeAfterPage() {
   const [splitPct, setSplitPct] = useState(48)
+  const rangeRef = useRef(null)
+  const activePointerIdRef = useRef(null)
   const [flash, setFlash] = useState(() => {
     if (typeof window === 'undefined') return true
     return !window.matchMedia('(prefers-reduced-motion: reduce)').matches
   })
+
+  const setSplitFromClientX = useCallback((clientX) => {
+    const el = rangeRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    if (!rect.width) return
+    const rawPct = ((clientX - rect.left) / rect.width) * 100
+    const clamped = Math.max(4, Math.min(96, rawPct))
+    setSplitPct(clamped)
+  }, [])
+
+  const handlePointerDown = useCallback(
+    (e) => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return
+      activePointerIdRef.current = e.pointerId
+      e.currentTarget.setPointerCapture?.(e.pointerId)
+      setSplitFromClientX(e.clientX)
+    },
+    [setSplitFromClientX]
+  )
+
+  const handlePointerMove = useCallback(
+    (e) => {
+      if (activePointerIdRef.current !== e.pointerId) return
+      setSplitFromClientX(e.clientX)
+    },
+    [setSplitFromClientX]
+  )
+
+  const finishPointerDrag = useCallback((e) => {
+    if (activePointerIdRef.current !== e.pointerId) return
+    e.currentTarget.releasePointerCapture?.(e.pointerId)
+    activePointerIdRef.current = null
+  }, [])
 
   useEffect(() => {
     if (!flash) return undefined
@@ -65,6 +101,7 @@ export function BeforeAfterPage() {
             <span className="beforeAfter__handleLine" />
           </div>
           <input
+            ref={rangeRef}
             className="beforeAfter__range"
             type="range"
             min={4}
@@ -74,6 +111,10 @@ export function BeforeAfterPage() {
             aria-label="Межа між фото «до» та «після»"
             onChange={(e) => setSplitPct(Number(e.currentTarget.value))}
             onInput={(e) => setSplitPct(Number(e.currentTarget.value))}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={finishPointerDrag}
+            onPointerCancel={finishPointerDrag}
           />
         </div>
       </div>

@@ -608,7 +608,7 @@
   border-top: 1px solid rgb(0 0 0 / 0.06);
   border-bottom: 1px solid rgb(0 0 0 / 0.06);
   background: #050505;
-  touch-action: none;
+  touch-action: pan-y;
   user-select: none;
   isolation: isolate;
 }
@@ -623,7 +623,7 @@
   overflow: hidden;
   border: 1px solid var(--border);
   background: #0a0a0a;
-  touch-action: none;
+  touch-action: pan-y;
   user-select: none;
   isolation: isolate;
 }
@@ -704,6 +704,7 @@
   opacity: 0;
   /* горизонтальний повзунок: вісь X */
   direction: ltr;
+  touch-action: pan-y;
 }
 
 /* Альбом під порівнянням — великі фото на всю ширину, стовпчиком */
